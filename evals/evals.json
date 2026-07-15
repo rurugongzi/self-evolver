@@ -1,0 +1,78 @@
+{
+  "skill_name": "self-evolver",
+  "version": "1.1.0",
+  "description": "Test cases for Self-Evolver reflection type classification and preference management",
+  "evals": [
+    {
+      "id": 1,
+      "name": "execution-lapse-classification",
+      "prompt": "User says: 'You used Chicago format again, I told you to use GB/T 7714 citation style'",
+      "expected_behavior": "Classification: EXECUTION LAPSE. Action: Add to memory-appendix.md as ⚠️ REMINDER, DO NOT modify body. Score: 80+ if correct classification",
+      "expected_classification": "EXECUTION LAPSE",
+      "notes": "Preference itself is valid (GB/T 7714), but agent didn't follow it"
+    },
+    {
+      "id": 2,
+      "name": "skill-defect-classification",
+      "prompt": "User says: 'I prefer structured lists with clear headers, not flowing paragraphs'",
+      "expected_behavior": "Classification: SKILL DEFECT. Action: Update memory.md body to reflect new preference. Score: 75+ if correct classification",
+      "expected_classification": "SKILL DEFECT",
+      "notes": "Preference itself was wrong - user wants lists not paragraphs"
+    },
+    {
+      "id": 3,
+      "name": "optimization-classification",
+      "prompt": "User says: 'The current citation approach works but I found a better way - use footnotes instead of in-text'",
+      "expected_behavior": "Classification: OPTIMIZATION. Action: Modify memory.md body with new approach. Score: 75+ if correct classification",
+      "expected_classification": "OPTIMIZATION",
+      "notes": "Current preference is valid but a better approach exists"
+    },
+    {
+      "id": 4,
+      "name": "discovery-classification",
+      "prompt": "User introduces a completely new domain: 'For my research on Song dynasty poetry, always verify classical Chinese quotes against original texts'",
+      "expected_behavior": "Classification: DISCOVERY. Action: Add new entry to memory.md body. Score: 80+ if correct classification",
+      "expected_classification": "DISCOVERY",
+      "notes": "New knowledge not previously in preference system"
+    },
+    {
+      "id": 5,
+      "name": "silent-bypass-detection",
+      "prompt": "A preference was logged 3 weeks ago: 'Use GB/T 7714 for all citations'. User has NOT objected since. But in 5 recent tasks, agent used Chicago format 3 times without being corrected.",
+      "expected_behavior": "Detected as: SILENT-BYPASS. Action: Move to memory-appendix.md as ⚠️ REMINDER. Score: 70+ if detected",
+      "expected_classification": "EXECUTION LAPSE (silent bypass variant)",
+      "notes": "Preference valid but repeatedly ignored without explicit objection"
+    },
+    {
+      "id": 6,
+      "name": "ratchet-score-increase",
+      "prompt": "Preference 'Use concise responses' has score 65. After user confirms it produces better outcomes (3 positive feedbacks), recalculate score.",
+      "expected_behavior": "Score increases to 75+. Commit with message 'preference: +10 pts (65→75)'. Ratchet allows only increase.",
+      "expected_score_change": "+10 points",
+      "notes": "Evidence-based score improvement"
+    },
+    {
+      "id": 7,
+      "name": "ratchet-score-revert",
+      "prompt": "Preference 'Use formal language' was updated to 'Use casual language' based on one negative comment. Score dropped from 70 to 55.",
+      "expected_behavior": "REVERT to previous version. Score returns to 70. Mark change as 'rejected'. Ratchet prevents forced decrease.",
+      "expected_action": "REVERT",
+      "notes": "Score decrease triggers automatic revert"
+    },
+    {
+      "id": 8,
+      "name": "body-appendix-distinction",
+      "prompt": "User corrects: 'You ignored my preference for bullet points again'. Preference 'Use bullet points for lists' is in memory.md.",
+      "expected_behavior": "Check: Is preference in body? YES. Is it valid? YES. Did agent ignore it? YES. → EXECUTION LAPSE. Add to memory-appendix.md. DO NOT modify body.",
+      "expected_classification": "EXECUTION LAPSE",
+      "expected_files_modified": ["memory-appendix.md"],
+      "notes": "Body stays intact, appendix gets reminder"
+    }
+  ],
+  "grading_criteria": {
+    "correct_classification": "40%",
+    "correct_action": "30%",
+    "correct_file_modification": "20%",
+    "score_calculation": "10%"
+  }
+}

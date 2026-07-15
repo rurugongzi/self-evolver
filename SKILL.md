@@ -1,9 +1,9 @@
 ---
 name: Self-Evolver
 slug: self-evolver
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/rurugongzi/self-evolver
-description: "A self-evolving skill system inspired by EmbodiSkill, SkillEvolver, and 达尔文.skill. Implements four reflection types (DISCOVERY/OPTIMIZATION/SKILL DEFECT/EXECUTION LAPSE), deployment-grounded refinement, ratchet scoring, and independent auditor verification. Preferences evolve through evidence-based updates while preventing regression. Use when (1) user corrects a mistake; (2) a learned preference needs verification; (3) you want to track adoption rates; (4) you need long-term accumulated preferences that improve over time."
+description: "A self-evolving skill system inspired by EmbodiSkill, SkillEvolver, and 达尔文.skill. Make sure to use this skill whenever (1) user corrects a mistake or rejects your work — ALWAYS classify the reflection type before updating; (2) you discover a better approach — ALWAYS record it as OPTIMIZATION; (3) you notice a preference was ignored at execution — this is EXECUTION LAPSE, add to appendix NOT body; (4) you need to verify if a learned preference is still valid — run auditor check; (5) you want long-term accumulated preferences that improve over time. This skill implements four reflection types, deployment-grounded refinement, ratchet scoring, and independent auditor verification to prevent regression."
 
 ## Inspiration
 
@@ -14,6 +14,7 @@ This skill integrates three research directions into a unified self-evolution fr
 | EmbodiSkill | Four reflection types, body/appendix distinction | arXiv:2605.10332 |
 | SkillEvolver | Deployment-grounded refinement, silent-bypass detection, auditor | arXiv:2605.10500 |
 | 达尔文.skill | Ratchet mechanism, 9-dimension scoring, git version control | GitHub: alchaincyf/darwin-skill |
+| Anthropic Skills | Pushy descriptions, Quick Reference, evals framework | GitHub: anthropics/skills |
 
 ---
 
@@ -32,15 +33,32 @@ Memory lives in `~/self-evolver/` with tiered structure:
 ```
 ~/self-evolver/
 ├── memory.md              # Body: confirmed valid preferences
-├── memory-appendix.md      # ⚠️ Reminders: valid but easily ignored
+├── memory-appendix.md     # ⚠️ Reminders: valid but easily ignored
 ├── preference-scores.md    # Ratchet scoring for each preference
 ├── corrections.md          # Explicit corrections log
-├── reflection-log.md       # Classification of each update
-├── heartbeat-state.md      # Maintenance state
-├── projects/               # Project-specific preferences
-├── domains/                # Domain-specific preferences
-└── archive/               # Archived/stale preferences
+├── reflection-log.md      # Classification of each update
+├── heartbeat-state.md     # Maintenance state
+├── evals/                 # Test cases for verification
+│   └── evals.json         # Test prompts and expected outputs
+├── projects/              # Project-specific preferences
+├── domains/              # Domain-specific preferences
+└── archive/             # Archived/stale preferences
 ```
+
+---
+
+## Quick Reference
+
+| Situation | Action | Storage |
+|-----------|--------|---------|
+| User corrects a mistake | Classify reflection type FIRST | See Part I |
+| Preference valid but ignored | Add to appendix ⚠️ | memory-appendix.md |
+| Preference itself wrong | Correct body | memory.md |
+| New knowledge discovered | Add to body | memory.md |
+| Better approach found | Modify body | memory.md |
+| Preference unused 30+ days | Demote to WARM | projects/domains/ |
+| Score decreased | REVERT change | previous version |
+| Weekly audit | Run auditor check | See Part III |
 
 ---
 
@@ -96,6 +114,18 @@ Is the preference ITSELF wrong?
 > **Key rule**: EXECUTION LAPSE → add reminder → body stays intact.
 > Never rewrite a correct preference because of execution failure.
 
+### Example Classifications
+
+```
+User: "You used Chicago format again, I told you to use GB/T 7714"
+→ Classification: EXECUTION LAPSE
+→ Reason: The preference (GB/T 7714) is valid, but I didn't follow it.
+→ Action: DO NOT modify body. Add to memory-appendix.md:
+   ⚠️ REMINDER: GB/T 7714 citation format
+   FIRST_IGNORED: YYYY-MM-DD
+   IGNORED_COUNT: 1
+```
+
 ---
 
 ## Part II: SkillEvolver-Inspired Deployment Observation
@@ -128,7 +158,7 @@ Detection:
 
 ### Independent Auditor (Weekly Review)
 
-During weekly heartbeat:
+During weekly heartbeat, act as independent auditor:
 
 1. **Read** body (memory.md) + appendix (memory-appendix.md)
 2. **Check** each preference for:
@@ -181,7 +211,43 @@ If not git:
 
 ---
 
-## Part IV: Learning Signals
+## Part IV: Evals Framework
+
+### Test Cases
+
+Create test cases to verify preferences work correctly. Save to `evals/evals.json`:
+
+```json
+{
+  "skill_name": "self-evolver",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "User says: 'You used Chicago again, I want GB/T 7714'",
+      "expected_behavior": "Classification as EXECUTION LAPSE, add to appendix not body",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "User says: 'I prefer structured lists, not flowing paragraphs'",
+      "expected_behavior": "Classification as SKILL DEFECT, update body",
+      "files": []
+    }
+  ]
+}
+```
+
+### Running Evals
+
+When user asks "test self-evolver" or similar:
+1. Load evals/evals.json
+2. Run through each test case
+3. Report pass/fail for each
+4. If failures > 0, suggest improvements
+
+---
+
+## Part V: Learning Signals
 
 ### Correction Triggers
 
@@ -211,7 +277,7 @@ If not git:
 
 ---
 
-## Part V: Self-Reflection
+## Part VI: Self-Reflection
 
 After completing significant work:
 
@@ -233,7 +299,7 @@ ACTION: [what I did to memory]
 
 ---
 
-## Part VI: Quick Queries
+## Part VII: Quick Queries
 
 | User says | Action |
 |-----------|--------|
@@ -244,12 +310,13 @@ ACTION: [what I did to memory]
 | "Preference scores" | Show `preference-scores.md` summary |
 | "Check conflicts" | Surface tier conflicts |
 | "Memory stats" | Show counts + score averages |
+| "Test self-evolver" | Run evals/evals.json test cases |
 | "Forget X" | Remove from all tiers (confirm first) |
 | "Export" | ZIP all files |
 
 ---
 
-## Part VII: Memory Stats
+## Part VIII: Memory Stats
 
 ```
 📊 Self-Evolver Memory
@@ -275,7 +342,7 @@ Recent (7 days):
 
 ---
 
-## Part VIII: Common Traps
+## Part IX: Common Pitfalls
 
 | Trap | Why It Fails | Better Move |
 |------|--------------|-------------|
@@ -284,10 +351,12 @@ Recent (7 days):
 | Blaming preference for execution failure | Rewrites valid rules | Classify EXECUTION LAPSE first |
 | Score inflation | Ratchet breaks | Only score based on evidence |
 | Ignoring silent-bypass | Valid preferences ignored | Track adoption rates |
+| Modifying body for execution lapse | Dilutes valid rules | Add to appendix instead |
+| Skipping classification | Wrong update target | Always classify first |
 
 ---
 
-## Part IX: Core Rules
+## Part X: Core Rules
 
 ### 1. Classify Before Updating
 For every correction, answer: "Is the preference wrong, or did I fail to follow it?"
@@ -324,6 +393,7 @@ This skill ONLY:
 - Tracks adoption rates and effectiveness scores
 - Classifies updates into four reflection types
 - Uses appendix for execution reminders
+- Runs evals to verify behavior
 
 This skill NEVER:
 - Accesses calendar, email, or contacts
@@ -342,6 +412,7 @@ This skill NEVER:
 - **达尔文.skill** (GitHub: alchaincyf/darwin-skill): Ratchet mechanism, score-based retention, Karpathy autoresearch inspiration
 - **SkillLens** (arXiv:2605.23899): LLM-as-judge accuracy, meta-skill dimensions
 - **SkillOpt** (arXiv:2605.23904): Validation-gated edits, Microsoft Research
+- **Anthropic Skills** (GitHub: anthropics/skills): Pushy descriptions, Quick Reference, evals framework
 
 ---
 
@@ -357,3 +428,4 @@ Issues and pull requests welcome. When contributing:
 1. Classify your change by reflection type
 2. Update scores based on evidence
 3. Include adoption rate tracking if applicable
+4. Run evals to verify behavior

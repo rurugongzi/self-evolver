@@ -1,130 +1,72 @@
 # Self-Evolver
 
-🧠 A self-evolving skill system for AI agents, inspired by EmbodiSkill, SkillEvolver, and 达尔文.skill.
+🧠 A self-evolving skill system for AI agents, inspired by EmbodiSkill, SkillEvolver, 达尔文.skill, and Anthropic Skills.
 
 [![MIT License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![arXiv](https://img.shields.io/badge/arXiv-2605.10332-green.svg)](https://arxiv.org/abs/2605.10332)
-[![arXiv](https://img.shields.io/badge/arXiv-2605.10500-green.svg)](https://arxiv.org/abs/2605.10500)
+[![Version](https://img.shields.io/badge/Version-1.1.0-green.svg)](SKILL.md)
 
-## What is Self-Evolver?
+## Overview
 
-Self-Evolver is a preference management skill that helps AI agents learn from corrections and improve over time. Unlike simple preference logging, Self-Evolver implements **evidence-based evolution** with:
+Self-Evolver implements a **self-evolving preference system** that:
+- Classifies updates into four EmbodiSkill-inspired reflection types
+- Tracks adoption rates and effectiveness scores
+- Uses ratchet mechanism for score-based retention
+- Has independent auditor verification
+- Includes evals framework for behavior verification
 
-- **Four reflection types** (DISCOVERY/OPTIMIZATION/SKILL DEFECT/EXECUTION LAPSE)
-- **Deployment-grounded refinement** (track if preferences are actually used)
-- **Ratchet scoring** (scores only go up, never down)
-- **Independent auditor** (weekly verification)
-- **Body/Apendix distinction** (don't dilute valid preferences)
+## Core Features
 
-## Quick Start
-
-### Installation
-
-```bash
-# Clone the repo
-git clone https://github.com/rurugongzi/self-evolver.git ~/self-evolver
-
-# Or create directory manually
-mkdir -p ~/self-evolver
-```
-
-### Create Required Files
-
-```bash
-cd ~/self-evolver
-
-# Create memory files
-touch memory.md memory-appendix.md preference-scores.md corrections.md reflection-log.md heartbeat-state.md
-
-# Create directories
-mkdir -p projects domains archive
-```
-
-### Load in Hermes
-
-```
-/skill load self-evolver
-```
-
-## Core Concepts
-
-### The Four Reflection Types
+### Four Reflection Types
 
 | Type | Meaning | Action |
 |------|---------|--------|
-| **DISCOVERY** | Found new knowledge | Add to body |
+| **DISCOVERY** | New knowledge | Add to body |
 | **OPTIMIZATION** | Better approach exists | Modify body |
-| **SKILL DEFECT** | Preference itself is wrong | Correct body |
-| **EXECUTION LAPSE** | Didn't follow valid preference | Add to appendix |
+| **SKILL DEFECT** | Preference is wrong | Correct body |
+| **EXECUTION LAPSE** | Valid but ignored | Add to appendix ⚠️ |
 
-### Body vs Appendix
+### Ratchet Mechanism
 
-| Storage | Content | Rule |
-|---------|---------|------|
-| **Body** | Confirmed valid preferences | Never dilute |
-| **Appendix** | Valid but easily ignored | Add reminder, don't rewrite |
+Scores only move **up**, never down. If an update worsens the score → automatic revert.
 
-### Ratchet Scoring
+### Deployment Observation
 
-```
-Score = Clarity(20%) + Specificity(20%) + Adoption(20%) + Satisfaction(20%) + Stability(20%)
-```
-
-Scores only move UP. If an update worsens the score → automatic revert.
+Track whether learned preferences are actually used. Detect silent-bypass patterns.
 
 ## Architecture
 
 ```
 ~/self-evolver/
-├── memory.md              # Body: valid preferences
-├── memory-appendix.md     # ⚠️ Reminders for ignored valid preferences
-├── preference-scores.md    # Ratchet scoring
-├── corrections.md         # Explicit corrections log
-├── reflection-log.md      # Classification of each update
-├── heartbeat-state.md     # Maintenance state
-├── projects/              # Project-specific
-├── domains/              # Domain-specific
-└── archive/              # Archived/stale
+├── memory.md              # Body: confirmed valid preferences
+├── memory-appendix.md     # ⚠️ Reminders: valid but easily ignored
+├── preference-scores.md   # Ratchet scoring
+├── corrections.md        # Explicit corrections log
+├── reflection-log.md     # Classification of each update
+├── heartbeat-state.md    # Maintenance state
+├── evals/                # Test cases
+│   └── evals.json       # Test prompts
+├── projects/            # Project-specific preferences
+├── domains/            # Domain-specific preferences
+└── archive/          # Archived/stale preferences
 ```
 
-## Research Inspiration
+## Quick Reference
 
-| System | Key Contribution |
-|--------|-----------------|
-| **EmbodiSkill** (arXiv:2605.10332) | Four reflection types, body/appendix distinction |
-| **SkillEvolver** (arXiv:2605.10500) | Deployment observation, silent-bypass detection, auditor |
-| **达尔文.skill** (GitHub: alchaincyf/darwin-skill) | Ratchet mechanism, 9-dimension scoring |
+| Situation | Action |
+|-----------|--------|
+| User corrects a mistake | Classify reflection type FIRST |
+| Preference valid but ignored | Add to appendix ⚠️ |
+| Preference itself wrong | Correct body |
+| Score decreased | REVERT change |
+| Weekly audit | Run auditor check |
 
-## Example
+## Academic References
 
-```
-User: "You used Chicago format again, I told you to use GB/T 7714"
-
-Classification: EXECUTION LAPSE
-Reason: The preference (GB/T 7714) is valid, but I didn't follow it.
-
-Action:
-1. DO NOT modify the body preference
-2. Add to memory-appendix.md:
-   ⚠️ REMINDER: GB/T 7714 citation format
-   FIRST_IGNORED: 2026-07-15
-   IGNORED_COUNT: 1
-```
+- **EmbodiSkill** (arXiv:2605.10332): Four reflection types, body/appendix distinction
+- **SkillEvolver** (arXiv:2605.10500): Deployment-grounded refinement, silent-bypass detection
+- **达尔文.skill** (GitHub: alchaincyf/darwin-skill): Ratchet mechanism, score-based retention
+- **Anthropic Skills** (GitHub: anthropics/skills): Pushy descriptions, Quick Reference, evals framework
 
 ## License
 
 MIT License
-
-## Citation
-
-If this work is useful for your research, please cite:
-
-```bibtex
-@misc{self-evolver2026,
-  title={Self-Evolver: A Self-Evolving Skill System for AI Agents},
-  author={rurugongzi},
-  year={2026},
-  howpublished={\url{https://github.com/rurugongzi/self-evolver}},
-  note={Inspired by EmbodiSkill, SkillEvolver, and 达尔文.skill}
-}
-```
