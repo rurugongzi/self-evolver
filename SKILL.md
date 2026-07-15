@@ -1,9 +1,9 @@
 ---
 name: Self-Evolver
 slug: self-evolver
-version: 1.1.0
+version: 1.1.1
 homepage: https://github.com/rurugongzi/self-evolver
-description: "A self-evolving skill system inspired by EmbodiSkill, SkillEvolver, and 达尔文.skill. Make sure to use this skill whenever (1) user corrects a mistake or rejects your work — ALWAYS classify the reflection type before updating; (2) you discover a better approach — ALWAYS record it as OPTIMIZATION; (3) you notice a preference was ignored at execution — this is EXECUTION LAPSE, add to appendix NOT body; (4) you need to verify if a learned preference is still valid — run auditor check; (5) you want long-term accumulated preferences that improve over time. This skill implements four reflection types, deployment-grounded refinement, ratchet scoring, and independent auditor verification to prevent regression."
+description: "A self-evolving skill system inspired by EmbodiSkill, SkillEvolver, 达尔文.skill, Anthropic Skills, and self-improving-proactive. Make sure to use this skill whenever (1) user corrects a mistake or rejects your work — ALWAYS classify the reflection type before updating; (2) you discover a better approach — ALWAYS record it as OPTIMIZATION; (3) you notice a preference was ignored at execution — this is EXECUTION LAPSE, add to appendix NOT body; (4) you need to verify if a learned preference is still valid — run auditor check; (5) you want long-term accumulated preferences that improve over time. This skill implements four reflection types, deployment-grounded refinement, ratchet scoring, and independent auditor verification to prevent regression."
 
 ## Inspiration
 
@@ -15,6 +15,7 @@ This skill integrates three research directions into a unified self-evolution fr
 | SkillEvolver | Deployment-grounded refinement, silent-bypass detection, auditor | arXiv:2605.10500 |
 | 达尔文.skill | Ratchet mechanism, 9-dimension scoring, git version control | GitHub: alchaincyf/darwin-skill |
 | Anthropic Skills | Pushy descriptions, Quick Reference, evals framework | GitHub: anthropics/skills |
+| self-improving-proactive | HOT/WARM/COLD memory tiers, evidence-based updates, corrections classification | This system (rurugongzi/self-evolver) |
 
 ---
 
@@ -413,6 +414,7 @@ This skill NEVER:
 - **SkillLens** (arXiv:2605.23899): LLM-as-judge accuracy, meta-skill dimensions
 - **SkillOpt** (arXiv:2605.23904): Validation-gated edits, Microsoft Research
 - **Anthropic Skills** (GitHub: anthropics/skills): Pushy descriptions, Quick Reference, evals framework
+- **self-improving-proactive** (This system): HOT/WARM/COLD memory tiers, evidence-based updates, corrections classification
 
 ---
 
