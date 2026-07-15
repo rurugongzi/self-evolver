@@ -2,11 +2,86 @@
 
 All notable changes to Self-Evolver will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
+## [1.3.0] - 2026-07-15
+
+### 改进后的优势
+
+---
+
+### 一、Token 效率的质的飞跃
+
+| 场景 | 改进前 | 改进后 | 节省 |
+|:-----|:-------|:-------|:-----|
+| 启动注入 | 全文 dump（~2,000 chars） | 索引摘要（~500 chars） | **~75%** |
+| 大 memory（8+条目） | 全部占 prompt budget | 索引 + 按需 fetch 1-2 条 | **~80%** |
+| 无提示缓存的模型 | 每次请求都送 memory 全文 | 固定少量索引 | 显著 |
+
+**核心机制：** 之前 memory 全文无论相关与否都在 system prompt 里占着 token。现在只占索引的 4-5 行，Agent 用 `memory(action=read)` 按需获取。如果当前 session 跟 memory 无关（比如纯聊天），Agent 可以不读——0 浪费。
+
+---
+
+### 二、让 Agent 自己做决策，而非被动接受
+
+之前是"系统猜测什么相关就塞什么"——本质上是传统 RAG 的"推送"模式。改进后是 **拉取（pull）模式**：
+
+```
+改进前：
+System → [判断相关性] → 把N条记忆塞进prompt → Agent被动接收
+
+改进后：
+System → [展示索引轻量摘要] → Agent看到"有什么"、"每条花多少token"
+→ Agent根据当前任务判断是否值得取详情
+→ Agent主动调用 memory(read) 获取全文
+```
+
+这不只是 token 省了——**检索决策权回到了 Agent 手里**。Agent 比系统更清楚当前任务需要什么记忆。
+
+---
+
+### 三、三层渐进式架构落地
+
+claude-mem 最值钱的设计不是"怎么存"，而是**"怎么取"**——三层渐进式：
+
+| 层 | 改进前 | 改进后 |
+|:---|:-------|:-------|
+| **层1 — 索引** | ❌ memory 直接 dump 全文 | ✅ 常驻 system prompt 的索引摘要（~500 chars） |
+| **层2 — 上下文** | ❌ 缺少 ROI 提示 | ✅ 工具描述引导 Agent 从 discover 开始 |
+| **层3 — 详情** | ✅ session_search 已有 | ✅ 新增 memory(read) 统一入口 |
+
+之前有层3但没有层1和层2的引导。现在三层都有了，Agent 在**直觉上**会先看索引、再决定 fetch，而不是盲搜。
+
+---
+
+### 四、实际场景对比
+
+**场景：用户说"开始写第一章"**
+
+- **改进前**：system prompt 里带 2,000 chars 的 memory 全文（包含完全无关的工具配置）+ 论文信息。Agent 浪费 tokens 处理无用信息。
+
+- **改进后**：system prompt 里只看到：
+  ```
+  📝 ~28 tok | 论文项目"历史的天空"...
+  📝 ~81 tok | 论文"历史的天空"理论框架定版...
+  📝 ~28 tok | MCP: scholarmcp + semantic-scholar + zotero...
+  📝 ~45 tok | Memory 注入改为 Progressive Disclosure 索引...
+  ```
+  一目了然哪些跟第一章写作有关（前两条），无关的跳过。Agent 3 秒内决定不读无关条目。
+
+---
+
+### 新增功能
+
+| 功能 | 说明 |
+|------|------|
+| **observations/ 目录** | 原始观察记录存储，压缩后写入 memory |
+| **Token 感知检索** | 显示加载消耗，用户可控上下文大小 |
+| **Layer 2 Timeline** | 获取时间线上下文（~200-300 tokens） |
+
+---
 
 ## [1.2.0] - 2026-07-15
 
-### 🎯 核心升级：证据驱动执行
+### 核心升级：证据驱动执行
 
 **灵感来源**：web-access 浏览哲学 — "像人一样思考，兼顾高效与适应性的完成任务"
 
@@ -33,15 +108,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | Over-planning | 静态计划在动态目标前失效 |
 | Assuming failure means wrong method | 有时目标本身不存在 |
 
-#### 优化：Core Principle
-
-> **像人一样思考** — 失败 ≠ 方法错，失败 = 重新评估
-
 ---
 
 ## [1.1.1] - 2026-07-15
 
-### 🧠 灵感来源扩展
+### 灵感来源扩展
 
 新增两个重要灵感来源：
 
@@ -50,17 +121,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | **Anthropic Skills** | Pushy descriptions, Quick Reference, evals framework |
 | **self-improving-proactive** | HOT/WARM/COLD memory tiers, evidence-based updates |
 
-这使 self-evolver 从"单一技能"进化为"整合六大研究的统一框架"。
-
 ---
 
 ## [1.1.0] - 2026-07-15
 
-### ✨ Anthropic Skills 特性整合
-
-**灵感来源**：GitHub 87.3k Stars 的 Anthropic Skills 仓库
-
-#### 新增功能
+### Anthropic Skills 特性整合
 
 | 功能 | 说明 | 效果 |
 |------|------|------|
@@ -70,17 +135,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | **Evals 框架** | 测试用例机制 | 验证有效性 |
 | **Memory Stats** | 记忆统计 | 量化健康度 |
 
-#### 新增文件
-
-- `evals/evals.json` — 测试用例库
-
 ---
 
 ## [1.0.0] - 2026-07-14
 
-### 🚀 首发版本
+### 首发版本
 
 **定位**：面向 AI Agent 的自进化技能系统
+
+#### 核心架构
+
+```
+~/self-evolver/
+├── memory.md              # Body: 有效偏好
+├── memory-appendix.md     # Appendix: 容易被忽视的提醒
+├── preference-scores.md  # 棘轮评分
+├── corrections.md         # 纠正日志
+├── reflection-log.md      # 反射分类
+└── evals/               # 测试框架
+```
 
 #### 核心特性
 
@@ -90,19 +163,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 | 棘轮评分 | 达尔文.skill | 防止退化 |
 | 独立审计 | SkillEvolver | 验证有效性 |
 | 执行失误检测 | EmbodiSkill | 区分失误与缺陷 |
-| Body/Appdenix 区分 | EmbodiSkill | 保护有效偏好 |
-
-#### 架构
-
-```
-~/self-evolver/
-├── memory.md           # Body: 有效偏好
-├── memory-appendix.md  # Appendix: 容易被忽视的提醒
-├── preference-scores.md # 棘轮评分
-├── corrections.md      # 纠正日志
-├── reflection-log.md   # 反射分类
-└── evals/             # 测试框架
-```
+| Body/Appendix 区分 | EmbodiSkill | 保护有效偏好 |
 
 ---
 
@@ -110,15 +171,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 | 研究 | 贡献 | 来源 |
 |------|------|------|
-| EmbodiSkill | 四种反射类型、Body/Appdenix 区分 | arXiv:2605.10332 |
+| EmbodiSkill | 四种反射类型、Body/Appendix 区分 | arXiv:2605.10332 |
 | SkillEvolver | 部署观察、Silent-bypass 检测、审计机制 | arXiv:2605.10500 |
 | 达尔文.skill | 棘轮机制、基于评分的保留 | GitHub |
 | Anthropic Skills | Pushy 描述、快速参考、Evals 框架 | GitHub |
 | self-improving-proactive | HOT/WARM/COLD 记忆层、证据驱动更新 | This system |
 | web-access | 目标导向浏览哲学、证据驱动执行 | eze-is |
+| claude-mem | 3层渐进披露、Token 感知检索、拉取模式 | GitHub 87.3k ⭐ |
 
 ---
 
 ## 许可证
 
-MIT License - 可以自由使用、修改、分发
+MIT License

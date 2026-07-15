@@ -1,7 +1,7 @@
 ---
 name: Self-Evolver
 slug: self-evolver
-version: 1.2.0
+version: 1.3.0
 homepage: https://github.com/rurugongzi/self-evolver
 description: "A self-evolving skill system inspired by EmbodiSkill, SkillEvolver, 达尔文.skill, Anthropic Skills, self-improving-proactive, and web-access. Make sure to use this skill whenever (1) user corrects a mistake or rejects your work — ALWAYS classify the reflection type before updating; (2) you discover a better approach — ALWAYS record it as OPTIMIZATION; (3) you notice a preference was ignored at execution — this is EXECUTION LAPSE, add to appendix NOT body; (4) you need to verify if a learned preference is still valid — run auditor check; (5) you want long-term accumulated preferences that improve over time. This skill implements four reflection types, deployment-grounded refinement, ratchet scoring, and independent auditor verification to prevent regression."
 ---
@@ -59,7 +59,9 @@ Memory lives in `~/self-evolver/`:
 ├── site-patterns/         # Domain-specific patterns (web-access inspired)
 ├── projects/             # Project-specific preferences
 ├── domains/             # Domain-specific preferences
-└── archive/             # Archived/stale preferences
+├── archive/             # Archived/stale preferences
+└── observations/        # Session observations (claude-mem inspired)
+    └── raw/             # Raw observations before compression
 ```
 
 ---
@@ -179,6 +181,43 @@ Scores only move **up**, never down. If an update worsens the score → automati
 - One-time instructions ("do X now")
 - Context-specific ("in this file...")
 - Hypotheticals ("what if...")
+
+---
+
+## 3-Layer Progressive Disclosure (claude-mem Inspired)
+
+Inspired by claude-mem's 3-layer workflow: balance depth vs token cost.
+
+| Layer | Purpose | Token Cost | When to Use |
+|-------|---------|-----------|-------------|
+| **Layer 1: Search** | Get compact index with IDs | ~50-100 tokens | Initial lookup |
+| **Layer 2: Timeline** | Get chronological context | ~200-300 tokens | Need history |
+| **Layer 3: Full** | Get complete observation | ~500-1000 tokens | Need details only |
+
+### Layer Usage
+
+```
+When user asks about a preference:
+    Layer 1: search_preferences(query) → [id, summary, score]
+    Layer 2: get_preference_timeline(id) → [events, context]
+    Layer 3: get_preference_full(id) → [complete details]
+
+When logging an observation:
+    Raw → observations/raw/{timestamp}.md
+    Compressed → memory.md or memory-appendix.md
+```
+
+### Token-Aware Retrieval
+
+Display token cost before loading:
+```
+Found 3 matches for "citation format"
+  [1] id=xxx, score=85, ~80 tokens
+  [2] id=xxx, score=72, ~95 tokens  
+  [3] id=xxx, score=68, ~60 tokens
+  
+Load which? (1/2/3/all/none):
+```
 
 ---
 
